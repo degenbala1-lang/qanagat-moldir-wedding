@@ -54,13 +54,16 @@ music.addEventListener('ended', () => {
   music.play().then(() => fadeMusic(0, 0.78, 1600)).catch(() => {});
 });
 const startMusicAfterGesture = (event) => {
-  if (event.target.closest('#musicToggle')) return;
-  if (musicStarted || !music.paused) return;
-  music.play().then(() => {
-    musicStarted = true;
-    musicToggle.classList.add('is-playing');
-    musicToggle.innerHTML = '♫ <span>ӨШІРУ</span>';
-  }).catch(() => {});
+  const onMusicButton = event.target.closest('#musicToggle');
+  const onAutoButton = event.target.closest('#autoScrollToggle');
+  if (!onMusicButton && !musicStarted && music.paused) {
+    music.play().then(() => {
+      musicStarted = true;
+      musicToggle.classList.add('is-playing');
+      musicToggle.innerHTML = '♫ <span>ӨШІРУ</span>';
+    }).catch(() => {});
+  }
+  if (!onAutoButton && typeof startAutoScroll === 'function') startAutoScroll();
 };
 document.addEventListener('pointerdown', startMusicAfterGesture, { once: true });
 musicToggle.addEventListener('click', async () => {
@@ -142,7 +145,7 @@ let autoScrollFrame;
 let autoScrollRunning = false;
 const autoScrollStep = (time) => {
   if (!autoScrollRunning) return;
-  window.scrollBy(0, 0.35);
+  window.scrollBy(0, 0.52);
   if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) {
     autoScrollRunning = false;
     autoScrollToggle.classList.remove('is-playing');
@@ -151,21 +154,23 @@ const autoScrollStep = (time) => {
   }
   autoScrollFrame = requestAnimationFrame(autoScrollStep);
 };
+const startAutoScroll = () => {
+  if (autoScrollRunning) return;
+  autoScrollRunning = true;
+  autoScrollToggle.classList.add('is-playing');
+  autoScrollToggle.innerHTML = 'Ⅱ <span>ТОҚТАТУ</span>';
+  autoScrollFrame = requestAnimationFrame(autoScrollStep);
+};
+const stopAutoScroll = () => {
+  autoScrollRunning = false;
+  cancelAnimationFrame(autoScrollFrame);
+  autoScrollToggle.classList.remove('is-playing');
+  autoScrollToggle.innerHTML = '↓ <span>АВТО СЫРҒЫТУ</span>';
+};
 autoScrollToggle.addEventListener('click', () => {
-  autoScrollRunning = !autoScrollRunning;
-  autoScrollToggle.classList.toggle('is-playing', autoScrollRunning);
-  autoScrollToggle.innerHTML = autoScrollRunning ? 'Ⅱ <span>ТОҚТАТУ</span>' : '↓ <span>АВТО СЫРҒЫТУ</span>';
-  if (autoScrollRunning) autoScrollFrame = requestAnimationFrame(autoScrollStep);
-  else cancelAnimationFrame(autoScrollFrame);
+  if (autoScrollRunning) stopAutoScroll();
+  else startAutoScroll();
 });
-document.addEventListener('touchstart', (event) => {
-  if (autoScrollRunning && !event.target.closest('#autoScrollToggle')) {
-    autoScrollRunning = false;
-    cancelAnimationFrame(autoScrollFrame);
-    autoScrollToggle.classList.remove('is-playing');
-    autoScrollToggle.innerHTML = '↓ <span>АВТО СЫРҒЫТУ</span>';
-  }
-}, { passive: true });
 
 const slowAnchors = document.querySelectorAll('a[href^="#"]');
 slowAnchors.forEach((anchor) => {
