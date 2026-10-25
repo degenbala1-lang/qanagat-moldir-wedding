@@ -58,7 +58,8 @@ musicToggle.addEventListener('click', async () => {
 
 const petalRain = document.querySelector('.petal-rain');
 const petalPalette = ['rose', 'blush', 'white', 'deep'];
-for (let i = 0; i < 28; i += 1) {
+const petalCount = window.matchMedia('(max-width: 600px)').matches ? 14 : 22;
+for (let i = 0; i < petalCount; i += 1) {
   const petal = document.createElement('span');
   petal.className = `petal ${petalPalette[i % petalPalette.length]}`;
   petal.style.left = `${Math.random() * 100}%`;
