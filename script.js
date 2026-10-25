@@ -33,7 +33,26 @@ const form = document.querySelector('#rsvpForm');
 const message = document.querySelector('#formMessage');
 const music = document.querySelector('#weddingMusic');
 const musicToggle = document.querySelector('#musicToggle');
+const autoScrollToggle = document.querySelector('#autoScrollToggle');
 let musicStarted = false;
+music.loop = false;
+music.volume = 0.78;
+let fadeTimer;
+const fadeMusic = (from, to, duration = 1400) => {
+  cancelAnimationFrame(fadeTimer);
+  const startedAt = performance.now();
+  const step = (now) => {
+    const progress = Math.min(1, (now - startedAt) / duration);
+    music.volume = from + (to - from) * progress;
+    if (progress < 1) fadeTimer = requestAnimationFrame(step);
+  };
+  fadeTimer = requestAnimationFrame(step);
+};
+music.addEventListener('ended', () => {
+  music.currentTime = 0;
+  music.volume = 0;
+  music.play().then(() => fadeMusic(0, 0.78, 1600)).catch(() => {});
+});
 const startMusicAfterGesture = (event) => {
   if (event.target.closest('#musicToggle')) return;
   if (musicStarted || !music.paused) return;
@@ -118,6 +137,35 @@ const updateCountdown = () => {
 };
 updateCountdown();
 setInterval(updateCountdown, 1000);
+
+let autoScrollFrame;
+let autoScrollRunning = false;
+const autoScrollStep = (time) => {
+  if (!autoScrollRunning) return;
+  window.scrollBy(0, 0.35);
+  if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) {
+    autoScrollRunning = false;
+    autoScrollToggle.classList.remove('is-playing');
+    autoScrollToggle.innerHTML = '↓ <span>АВТО СЫРҒЫТУ</span>';
+    return;
+  }
+  autoScrollFrame = requestAnimationFrame(autoScrollStep);
+};
+autoScrollToggle.addEventListener('click', () => {
+  autoScrollRunning = !autoScrollRunning;
+  autoScrollToggle.classList.toggle('is-playing', autoScrollRunning);
+  autoScrollToggle.innerHTML = autoScrollRunning ? 'Ⅱ <span>ТОҚТАТУ</span>' : '↓ <span>АВТО СЫРҒЫТУ</span>';
+  if (autoScrollRunning) autoScrollFrame = requestAnimationFrame(autoScrollStep);
+  else cancelAnimationFrame(autoScrollFrame);
+});
+document.addEventListener('touchstart', (event) => {
+  if (autoScrollRunning && !event.target.closest('#autoScrollToggle')) {
+    autoScrollRunning = false;
+    cancelAnimationFrame(autoScrollFrame);
+    autoScrollToggle.classList.remove('is-playing');
+    autoScrollToggle.innerHTML = '↓ <span>АВТО СЫРҒЫТУ</span>';
+  }
+}, { passive: true });
 
 const slowAnchors = document.querySelectorAll('a[href^="#"]');
 slowAnchors.forEach((anchor) => {
